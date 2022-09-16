@@ -1,65 +1,89 @@
-import './App.css'
 import { inputs } from './inputs'
 import React, { useState } from 'react'
+import { convertDate, sortsDates, isOverLapping } from './utils/utils'
 
-function convertDate(slots) {
-  //calculate end time
-  slots.forEach((slot) => {
-    let splitStart = slot.start.split(":")
-    let hourAdd = Math.round(slot.duration / 60)
-    let minAdd = slot.duration - (hourAdd * 60)
-    slot.end = parseInt(splitStart[0]) + hourAdd + ":" + (parseInt(splitStart[1]) + minAdd === 0 ? '00' : parseInt(splitStart[1]) + minAdd)
-  })
-  return slots
-}
-
-function sortsDates(slots) {
-  //sorts slots by duration and starting time
-  slots.sort((a, b) => (a.duration < b.duration) ? 1 : -1)
-  slots.sort((a, b) => (a.start > b.start) ? 1 : -1)
-  return slots
+function findOverlaps(slots, index) {
+  //* fill an array with indexes of overlapping elements
+  let overlapWith = []
+  for (let i = 0; i < slots.length; i++) {
+    if (i !== index && isOverLapping(slots[index], slots[i])) {
+      overlapWith.push(i)
+    }
+  }
+  return overlapWith
 }
 
 function findSlotWidth(slots, index) {
-  let sharedLine = 0
-  for (let i = index; i < slots.length; i++) {
-    if (i < slots.length - 1 && slots[i].end < slots[i + 1].start)
-      sharedLine++
+  //* first assume that a slot A overlapping with slot B and C will take 1/3 of window width
+  //* then compare slots B and C to see if they overlap, if they don't then A will take 1/2 of window width
+  let width = slots[index].overlapWith.length + 1
+  for (let i = 0; i < slots[index].overlapWith.length; i++) {
+    if (
+      i < slots[index].overlapWith.length - 1 &&
+      !isOverLapping(
+        slots[slots[index].overlapWith[i]],
+        slots[slots[index].overlapWith[i + 1]],
+      )
+    ) {
+      width--
+    }
   }
-  return sharedLine
+  return width
 }
+
+function findSlotPosition(slots, index) {
+  let position = 0
+  for (let i = 0; i < slots[index].overlapWith.length; i++) {
+    if (
+      typeof slots[slots[index].overlapWith[i]].position !== 'undefined' &&
+      slots[slots[index].overlapWith[i]].position < slots[index].width - 1
+    ) {
+      position++
+    }
+  }
+  return position
+}
+
+function findWidthRatio(slots, index) {}
 
 function parseSlots(slots) {
   convertDate(slots)
   sortsDates(slots)
 
   slots.forEach((slot, index) => {
-    // slot.width = findSlotWidth(slots, index)
-    // slot.width = findSlotWidth(slots, index)
-    slot.width = 1
+    slot.overlapWith = findOverlaps(slots, index)
+    slot.width = findSlotWidth(slots, index)
+    slot.position = findSlotPosition(slots, index)
+    slot.widthRatio = findWidthRatio(slots, index)
   })
-
-  for (let i = 0; i < slots.length; i++) {
-    if (i < slots.length - 1 && slots[i].end > slots[i + 1].start && slots[i].end < slots[i + 1].end) {
-      slots[i].width++
-    }
-  }
-  console.log(slots)
-  // console.log(newSlots)
   return slots
 }
 
 export default function App() {
-  const [slots] = useState(parseSlots(inputs.slice(0, 5)))
+  const [slots] = useState(parseSlots(inputs.slice(0, 10)))
 
   return (
-    <div className='p-4'>
-      <div className='border border-gray-300 ml-4 py-4 rounded-sm'>
+    <div className="p-4">
+      <div className="border border-gray-300 ml-4 py-2 rounded-sm relative h-[1800px]">
         {slots.map((el) => {
+          console.log(el)
           return (
-            <div key={el.id} className={'bg-cyan-200 border border-cyan-500 rounded w-1/' + el.width}>{el.start + " - " + el.end} </div>)
-        })
-        }</div>
+            <div
+              key={el.id}
+              style={{
+                height: el.duration * 2.5,
+                top: (el.timeStamp - 500) * 2.5,
+                left: el.width === 1 ? 0 : (el.position / el.width) * 100 + '%',
+                right: el.width === 1 && 0,
+                width: (1 / el.width) * 100 + '%',
+              }}
+              className="absolute bg-cyan-200 border border-cyan-500 rounded"
+            >
+              {el.start + ' - ' + el.end + ' ' + el.width}
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }
