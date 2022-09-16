@@ -15,7 +15,7 @@ function findOverlaps(slots, index) {
 
 function findSlotWidth(slots, index) {
   //* first assume that a slot A overlapping with slot B and C will take 1/3 of window width
-  //* then compare slots B and C to see if they overlap, if they don't then A will take 1/2 of window width
+  //* then if the slot is overlapping with other slots, take the width of the first one by order
   let width = slots[index].overlapWith.length + 1
   if (
     slots[index].overlapWith.length &&
