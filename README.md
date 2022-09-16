@@ -19,6 +19,6 @@ First clone the project, then npm install & start and you're good to go !
 6. Find the ratio divided by the width. 
 This is a special case needed when slots A<->B<->C and C<->D overlap. A, B and C will be 1/3 of the screen each and D will be 2/3. - widthRatio
 
-So the style of each component is determined like so :
+So the style of each component is determined like so : \
 width = (widthRatio / width) * 100 \
 left = (position / width) * 100
