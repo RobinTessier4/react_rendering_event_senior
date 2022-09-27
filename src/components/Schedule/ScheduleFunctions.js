@@ -1,3 +1,10 @@
+export function parseSlots(slots) {
+  convertDate(slots)
+  sortsDates(slots)
+  findSlotsInfos(slots)
+  return slots
+}
+
 function convertDateToTimestamp(date) {
   const splittedDate = date.split(':')
   return parseInt(splittedDate[0]) * 60 + parseInt(splittedDate[1])
@@ -18,7 +25,7 @@ function isOverLapping(slot1, slot2) {
   return false
 }
 
-export function convertDate(slots) {
+function convertDate(slots) {
   slots.forEach((slot) => {
     const time = convertDateToTimestamp(slot.start) + slot.duration
     const newHour = Math.floor(time / 60).toString()
@@ -29,13 +36,13 @@ export function convertDate(slots) {
   return slots
 }
 
-export function sortsDates(slots) {
+function sortsDates(slots) {
   slots.sort((a, b) => (a.duration < b.duration ? 1 : -1))
   slots.sort((a, b) => (a.start > b.start ? 1 : -1))
   return slots
 }
 
-export function findOverlaps(slots, index) {
+function findOverlaps(slots, index) {
   let overlapIndexes = []
   for (let i = 0; i < slots.length; i++) {
     if (i !== index && isOverLapping(slots[index], slots[i])) {
@@ -45,7 +52,7 @@ export function findOverlaps(slots, index) {
   return overlapIndexes
 }
 
-export function findSlotWidth(slots, index) {
+function findSlotWidth(slots, index) {
   let width = slots[index].overlapIndexes.length + 1
   if (
     slots[index].overlapIndexes.length &&
@@ -67,7 +74,7 @@ export function findSlotWidth(slots, index) {
   return width
 }
 
-export function findSlotPosition(slots, index) {
+function findSlotPosition(slots, index) {
   let position = 0
   for (let i = 0; i < slots[index].overlapIndexes.length; i++) {
     if (
@@ -80,10 +87,19 @@ export function findSlotPosition(slots, index) {
   return position
 }
 
-export function findWidthRatio(slots, index) {
+function findWidthRatio(slots, index) {
   let widthRatio = 1
   if (slots[index].overlapIndexes.length < slots[index].width - 1) {
     widthRatio = slots[index].width - slots[index].overlapIndexes.length
   }
   return widthRatio
+}
+
+function findSlotsInfos(slots) {
+  slots.forEach((slot, index) => {
+    slot.overlapIndexes = findOverlaps(slots, index)
+    slot.width = findSlotWidth(slots, index)
+    slot.position = findSlotPosition(slots, index)
+    slot.widthRatio = findWidthRatio(slots, index)
+  })
 }
